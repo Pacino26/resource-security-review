@@ -1,0 +1,13 @@
+{
+  "name": "sharing-claude-plugins",
+  "owner": {
+    "name": "Pacino"
+  },
+  "plugins": [
+    {
+      "name": "resource-security-review",
+      "source": "./plugins/resource-security-review",
+      "description": "第三方資源 (Chrome 外掛、GitHub repo、Claude Skill、MCP Server、npm / pip 套件) 安裝前的資安評估"
+    }
+  ]
+}

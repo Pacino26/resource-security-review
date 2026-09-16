@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<!--
+  資安評估報告模板 — 自包含、零外部依賴、淺/深色自動切換。
+  用法：複製本檔，替換下列 {{佔位符}}，存成 report.html，請使用者用瀏覽器開啟。
+    {{TARGET_NAME}}     報告標題 (資源名稱)
+    {{TARGET_META}}     橫幅小字 (類型 · commit / 版本)
+    {{VERDICT_CLASS}}   good | warn | bad  (對應 🟢 / 🟡 / 🔴)
+    {{VERDICT_LABEL}}   安全可用 | 有條件可用 | 不建議
+    {{VERDICT_ONELINE}} 一句話結論
+    {{INFO_ROWS}}       基本資訊列，每列：<tr><td>作者</td><td>✅ ...</td></tr>
+    {{CHECK_ROWS}}      逐項燈號列，每列見下方 .row 註解的範本
+    {{REDFLAG}}         紅旗結果 (全過：「N 項全數未命中」；命中：引用原文)
+    {{GRAYAREA}}        需使用者知情的灰色地帶
+    {{FOOTER}}          評估日期、評估版本、「一次性報告」字樣
+-->
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TARGET_NAME}} — 資安評估</title>
+<style>
+:root{
+  --bg:#fff;--surface:#fafafa;--text:#1a1a1a;--muted:#666;--border:rgba(0,0,0,.12);
+  --good:#16a34a;--warn:#d97706;--bad:#dc2626;
+  --good-bg:#ecfdf3;--warn-bg:#fff7ed;--bad-bg:#fef2f2;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1e;--surface:#262628;--text:#e8e8e8;--muted:#9a9a9a;--border:rgba(255,255,255,.14);
+    --good-bg:#10241a;--warn-bg:#2a1f12;--bad-bg:#2a1414;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);line-height:1.6;padding:24px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif}
+.wrap{max-width:760px;margin:0 auto}
+.banner{border:1px solid var(--border);border-radius:12px;padding:16px 20px}
+.banner.good{background:var(--good-bg)}.banner.warn{background:var(--warn-bg)}.banner.bad{background:var(--bad-bg)}
+.banner .meta{font-size:13px;color:var(--muted);margin-bottom:6px}
+.pill{display:inline-flex;align-items:center;gap:7px;font-weight:500;font-size:15px}
+.pill .dot{width:11px;height:11px;border-radius:50%}
+.pill.good{color:var(--good)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}
+.pill.good .dot{background:var(--good)}.pill.warn .dot{background:var(--warn)}.pill.bad .dot{background:var(--bad)}
+.oneline{font-size:14px;color:var(--muted);margin-top:8px}
+h2{font-size:13px;font-weight:500;color:var(--muted);margin:24px 0 8px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.info td{padding:10px 16px;border-top:1px solid var(--border)}
+.info tr:first-child td{border-top:none}
+.info td:first-child{color:var(--muted);width:96px;vertical-align:top}
+.row{display:flex;gap:10px;padding:10px 16px;border-top:1px solid var(--border)}
+.row:first-child{border-top:none}
+.row .dot{width:9px;height:9px;border-radius:50%;margin-top:7px;flex:none}
+.row .dot.good{background:var(--good)}.row .dot.warn{background:var(--warn)}.row .dot.bad{background:var(--bad)}
+.row .body{flex:1;min-width:0}
+.row .label{font-weight:500}.row .desc{color:var(--muted)}
+.notes{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+.note{flex:1;min-width:220px;border:1px solid var(--border);border-radius:12px;padding:12px 16px}
+.note.good{background:var(--good-bg)}.note.warn{background:var(--warn-bg)}
+.note h3{margin:0 0 4px;font-size:14px;font-weight:500}
+.note p{margin:0;font-size:13px;color:var(--muted)}
+.foot{margin-top:24px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="banner {{VERDICT_CLASS}}">
+    <div class="meta">{{TARGET_META}}</div>
+    <span class="pill {{VERDICT_CLASS}}"><span class="dot"></span>{{VERDICT_LABEL}}</span>
+    <div class="oneline">{{VERDICT_ONELINE}}</div>
+  </div>
+
+  <h2>基本資訊</h2>
+  <div class="card"><table class="info">
+{{INFO_ROWS}}
+  </table></div>
+
+  <h2>逐項燈號</h2>
+  <div class="card">
+    <!-- 每列範本（dot 用 good / warn / bad）：
+    <div class="row"><span class="dot good"></span><div class="body"><span class="label">程式碼可讀</span> <span class="desc">— 全明碼、無混淆</span></div></div>
+    -->
+{{CHECK_ROWS}}
+  </div>
+
+  <div class="notes">
+    <div class="note good"><h3>紅旗清單</h3><p>{{REDFLAG}}</p></div>
+    <div class="note warn"><h3>灰色地帶</h3><p>{{GRAYAREA}}</p></div>
+  </div>
+
+  <div class="foot">{{FOOTER}}</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "name": "resource-security-review",
+  "description": "第三方資源 (Chrome 外掛、GitHub repo、Claude Skill、MCP Server、npm / pip 套件) 安裝前的資安評估",
+  "author": {
+    "name": "Pacino"
+  }
+}
