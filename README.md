@@ -1,45 +1,33 @@
-# Sharing Claude Code Plugins
+# resource-security-review
 
-Sharing 團隊共用的 Claude Code plugin marketplace。
+Claude Code plugin：第三方資源 (Chrome 外掛、GitHub repo、Claude Skill / Plugin、MCP Server、npm / pip 套件) 安裝前的資安評估，產出 🟢🟡🔴 風險報告。
 
 ## 安裝
-
-前置：已安裝 `gh` CLI 並完成 `gh auth login` (本 repo 為 private，且評估 skill 會用 `gh api` 查 repo 狀態)。
 
 在 Claude Code 對話中：
 
 ```
-/plugin marketplace add Pacino26/sharing-claude-plugins
-/plugin install resource-security-review@sharing-claude-plugins
+/plugin marketplace add Pacino26/resource-security-review
+/plugin install resource-security-review@resource-security-review
 ```
 
 或在終端機：
 
 ```bash
-claude plugin marketplace add Pacino26/sharing-claude-plugins
-claude plugin install resource-security-review@sharing-claude-plugins
+claude plugin marketplace add Pacino26/resource-security-review
+claude plugin install resource-security-review@resource-security-review
 ```
 
 更新到新版：
 
 ```
-/plugin marketplace update sharing-claude-plugins
-/plugin update resource-security-review@sharing-claude-plugins
+/plugin marketplace update resource-security-review
+/plugin update resource-security-review@resource-security-review
 ```
 
-背景自動更新 private repo 需要 git credential helper：
+建議先裝好 `gh` CLI 並 `gh auth login`，評估時會用 `gh api` 查 repo 的 stars、更新時間等資訊。
 
-```bash
-gh auth setup-git
-```
-
-## Plugins
-
-| Plugin | 用途 |
-|--------|------|
-| `resource-security-review` | 第三方資源安裝前的資安評估，產出 🟢🟡🔴 風險報告 |
-
-## resource-security-review
+## 功能說明
 
 **一句話**：要裝外掛、skill、MCP 或套件之前，先讓 Claude 做一次「資安健檢」，看這個東西能不能放心用。
 
