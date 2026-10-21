@@ -125,9 +125,8 @@ def scan_file(path, char_hits, comment_hits):
             codes = sorted({f"U+{ord(c):04X}" for c in chars})
             hit = f"{shown}:{lineno}: [{name}] {' '.join(codes[:10])}{' …' if len(codes) > 10 else ''} (共 {len(chars)} 個)"
             if name in ("Unicode tag 字元", "variation selector"):
-                decoded = decode_hidden(name, chars)
-                more = f" …(共 {len(decoded)} 字)" if len(decoded) > 100 else ""
-                hit += f"，解碼後：「{safe(decoded[:100])}」{more}"
+                # 不截斷：這兩類沒有合法的長文用途，截斷反而讓攻擊者能把指令藏在截斷點之後
+                hit += f"，解碼後：「{safe(decode_hidden(name, chars))}」"
             char_hits.append(hit)
     rest = zero_width_lines[MAX_HITS_PER_FILE:]
     if rest:
