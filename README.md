@@ -18,14 +18,24 @@ claude plugin marketplace add Pacino26/resource-security-review
 claude plugin install resource-security-review@resource-security-review
 ```
 
-更新到新版：
+### 開啟自動更新 (建議)
+
+這是第三方 marketplace，Claude Code 預設**不會**自動更新它，不開的話之後出新版你不會收到。開一次就好：
+
+1. 在 Claude Code 對話中輸入 `/plugin`
+2. 切到 **Marketplaces** 分頁，選 `resource-security-review`
+3. 選 **Enable auto-update**
+
+開啟後 Claude Code 啟動時會自己檢查新版；更新下載好之後，要重開 Claude Code (或執行 `/reload-plugins`) 才會生效。
+
+沒開自動更新時，手動更新到新版：
 
 ```
 /plugin marketplace update resource-security-review
 /plugin update resource-security-review@resource-security-review
 ```
 
-建議先裝好 `gh` CLI 並 `gh auth login`，評估時會用 `gh api` 查 repo 的 stars、更新時間等資訊。
+建議先裝好 `gh` CLI 並 `gh auth login`，評估時會用 `gh api` 抓原始檔、查 repo 的 stars、更新時間等資訊。掃描隱藏字元會用到 `python3` (Mac 裝了 git 就會有)。
 
 ## 功能說明
 
