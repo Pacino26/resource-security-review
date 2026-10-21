@@ -48,17 +48,28 @@ def decode_hidden(name, chars):
     return data.decode("utf-8", errors="replace")
 
 
+def vs_ok(prev, c):
+    """emoji / keycap 後面單獨一個 U+FE0E / U+FE0F 是正常寫法；其他 variation selector 一律算命中。"""
+    return ord(c) in (0xFE0E, 0xFE0F) and (unicodedata.category(prev) == "So" or prev in "0123456789#*")
+
+
+def zwj_ok(prev, nxt):
+    """emoji 組合序列 (例：家庭 emoji) 中間的 U+200D 是正常寫法。"""
+    return (unicodedata.category(prev) in ("So", "Sk") or ord(prev) == 0xFE0F) and unicodedata.category(nxt) == "So"
+
+
 def line_hits(line):
-    """回傳 {類別: [字元]}。variation selector 連續兩個以上才算 (emoji 後面單獨一個 U+FE0F 很常見)。"""
+    """回傳 {類別: [字元]}。"""
     found = {}
-    run = []
-    for c in line + "\n":
+    for i, c in enumerate(line):
+        prev = line[i - 1] if i else ""
+        nxt = line[i + 1] if i + 1 < len(line) else ""
         if ord(c) in VARIATION_SELECTORS:
-            run.append(c)
+            if not (prev and vs_ok(prev, c)):
+                found.setdefault("variation selector", []).append(c)
             continue
-        if len(run) >= 2:
-            found.setdefault("variation selector", []).extend(run)
-        run = []
+        if ord(c) == 0x200D and prev and nxt and zwj_ok(prev, nxt):
+            continue
         k = kind(c)
         if k:
             found.setdefault(k, []).append(c)
@@ -69,10 +80,8 @@ def error_line(path, e):
     return f"{safe(path)}: [無法讀取] {safe(e.strerror or str(e))}"
 
 
-def capped(lines, limit, shown, label):
-    if len(lines) <= limit:
-        return lines
-    return lines[:limit] + [f"{shown}: [{label}] 另有 {len(lines) - limit} 筆未列出"]
+def line_list(numbers):
+    return ", ".join(map(str, numbers[:30])) + (" …" if len(numbers) > 30 else "")
 
 
 def scan_file(path, char_hits, comment_hits):
@@ -95,35 +104,53 @@ def scan_file(path, char_hits, comment_hits):
         char_hits.append(f"{shown}: [含 NUL 位元組] 可能是二進位檔，仍照常掃描")
     text = data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
 
-    hits = []
+    zero_width_lines = []
     for lineno, line in enumerate(text.split("\n"), 1):
+        if line.isascii():
+            continue  # 隱形字元都不是 ASCII
         for name, chars in line_hits(line).items():
+            # 零寬類有正常用途 (BOM、印度文字的 ZWJ)，每檔只列前幾筆；tag、variation selector、bidi 一律全列
+            if name == "零寬 / 隱形字元":
+                zero_width_lines.append(lineno)
+                if len(zero_width_lines) > MAX_HITS_PER_FILE:
+                    continue
             codes = sorted({f"U+{ord(c):04X}" for c in chars})
             hit = f"{shown}:{lineno}: [{name}] {' '.join(codes[:10])}{' …' if len(codes) > 10 else ''} (共 {len(chars)} 個)"
             if name in ("Unicode tag 字元", "variation selector"):
                 hit += f"，解碼後：「{safe(decode_hidden(name, chars))}」"
-            hits.append(hit)
-    char_hits += capped(hits, MAX_HITS_PER_FILE, shown, "隱形字元")
+            char_hits.append(hit)
+    rest = zero_width_lines[MAX_HITS_PER_FILE:]
+    if rest:
+        char_hits.append(f"{shown}: [零寬 / 隱形字元] 另有 {len(rest)} 行未列出，行號 {line_list(rest)}，請回原檔逐行確認")
 
-    comments = []
-    for m in HTML_COMMENT.finditer(text):
-        lineno = text.count("\n", 0, m.start()) + 1
-        body = " ".join(m.group(1)[:1000].split())[:200]
-        comments.append(f"{shown}:{lineno}: [HTML 註解] {safe(body)}")
-    comment_hits += capped(comments, MAX_COMMENTS_PER_FILE, shown, "HTML 註解")
+    lineno, last = 1, 0
+    rest = []
+    for i, m in enumerate(HTML_COMMENT.finditer(text)):
+        lineno += text.count("\n", last, m.start())
+        last = m.start()
+        if i >= MAX_COMMENTS_PER_FILE:
+            rest.append(lineno)
+            continue
+        body = " ".join(m.group(1).split())
+        more = f" …(共 {len(body)} 字，請回原檔看完)" if len(body) > 200 else ""
+        comment_hits.append(f"{shown}:{lineno}: [HTML 註解] {safe(body[:200])}{more}")
+    if rest:
+        comment_hits.append(f"{shown}: [HTML 註解] 另有 {len(rest)} 個未列出，行號 {line_list(rest)}，請回原檔逐一確認")
 
 
 def main(paths):
     # 字元類命中先印、HTML 註解後印，避免大量無害註解把真正的命中擠到後面
     char_hits, comment_hits = [], []
     for root in paths:
-        root = root.rstrip(os.sep) or os.sep
+        root = os.path.normpath(root)  # 去掉結尾的 / 與 /.，避免跟進指向外部的符號連結
         if os.path.islink(root) or not os.path.isdir(root):
             scan_file(root, char_hits, comment_hits)
             continue
         for dirpath, dirnames, filenames in os.walk(root, onerror=lambda e: char_hits.append(error_line(e.filename or root, e))):
-            if dirpath == root and ".git" in dirnames:
-                dirnames.remove(".git")  # 只略過最上層 git clone 產生的 .git
+            git_dir = os.path.join(dirpath, ".git")
+            if ".git" in dirnames and not os.path.islink(git_dir):
+                dirnames.remove(".git")
+                char_hits.append(f"{safe(git_dir)}: [略過] git 資料夾，未掃描 (不是 git clone 產生的就要另外檢查)")
             dirnames.sort()
             # os.walk 不進入指向資料夾的符號連結，但仍要列出來
             links = [d for d in dirnames if os.path.islink(os.path.join(dirpath, d))]
