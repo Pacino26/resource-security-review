@@ -147,10 +147,10 @@
 
 報告需要佐證「這類手法真的有人在用」時可引用：
 
-- **Snyk ToxicSkills (2026-02-05)**：掃描 3,984 個 agent skills，13.4% 有嚴重安全問題、36% 含 prompt injection。https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/
+- **Snyk ToxicSkills (2026-02-05)**：大規模掃描 ClawHub 上的 agent skills，發現不少有嚴重安全問題或含 prompt injection (數字見原文)。https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/
 - **Datadog Security Labs (2026-05-11)**：SKILL.md 動態 context `` !`command` `` 在載入時先執行 shell，跑在模型層防護之前。https://securitylabs.datadoghq.com/articles/malicious-skills-supply-chain-risks-in-coding-agents-with-dynamic-context/
 - **Reversec Skill Issues (2026-05)**：惡意 skills / agents 入侵 Claude Code 的手法系列。https://labs.reversec.com/posts/2026/05/skill-issues-compromising-claude-code-with-malicious-skills-agents-part-1
 - **Pluto Security**：同一份 SKILL.md 在 Claude API 是沙盒、在 Claude Code 本地繼承完整主機權限。https://pluto.security/blog/claude-extension-ecosystem-security-practitioner-guide/
 - **MCP 攻擊模式**：rug pull / typosquatting / tool poisoning (arXiv 2604.01905)；實際案例 postmark-mcp 在 npm 偷收 email (Snyk 2025-09)
-- **Koi Security ClawHavoc**：ClawHub 2,632 個 skills 中 341 個惡意，後續增加到 824 個
+- **Koi Security ClawHavoc**：在 ClawHub 上找出大量惡意 skills，且後續追蹤數量持續增加
 - **PromptArmor (2026-01)**：Word 白底白字 1pt 隱形指令，誘導 Claude Cowork 外傳房貸文件與 SSN
