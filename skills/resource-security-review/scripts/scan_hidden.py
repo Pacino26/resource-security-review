@@ -15,6 +15,7 @@ BIDI = set(range(0x202A, 0x202F)) | set(range(0x2066, 0x206A)) | {0x061C, 0x200E
 VARIATION_SELECTORS = set(range(0xFE00, 0xFE10)) | set(range(0xE0100, 0xE01F0))
 INVISIBLE_EXTRA = {0x034F, 0x115F, 0x1160, 0x3164, 0xFFA0}  # CGJ、Hangul filler：不是 Cf 但一樣看不到
 HTML_COMMENT = re.compile(r"<!--(.*?)(?:-->|\Z)", re.S)
+COMMON_ZERO_WIDTH = {0x00AD, 0x200C, 0x200D, 0xFEFF}  # 軟連字號、ZWNJ、ZWJ、BOM：常有正常用途
 MAX_HITS_PER_FILE = 20
 MAX_COMMENTS_PER_FILE = 10
 
@@ -49,8 +50,10 @@ def decode_hidden(name, chars):
 
 
 def vs_ok(prev, c):
-    """emoji / keycap 後面單獨一個 U+FE0E / U+FE0F 是正常寫法；其他 variation selector 一律算命中。"""
-    return ord(c) in (0xFE0E, 0xFE0F) and (unicodedata.category(prev) == "So" or prev in "0123456789#*")
+    """符號、標點 (例如箭頭、雙驚嘆號)、資訊符號 U+2139、keycap 後面單獨一個 U+FE0E / U+FE0F 是正常寫法；其他 variation selector 一律算命中。"""
+    return ord(c) in (0xFE0E, 0xFE0F) and (
+        unicodedata.category(prev)[0] in "SP" or ord(prev) == 0x2139 or prev in "0123456789#*"
+    )
 
 
 def zwj_ok(prev, nxt):
@@ -109,8 +112,8 @@ def scan_file(path, char_hits, comment_hits):
         if line.isascii():
             continue  # 隱形字元都不是 ASCII
         for name, chars in line_hits(line).items():
-            # 零寬類有正常用途 (BOM、印度文字的 ZWJ)，每檔只列前幾筆；tag、variation selector、bidi 一律全列
-            if name == "零寬 / 隱形字元":
+            # 只有常見的零寬字元 (BOM、印度文字的 ZWJ 等) 每檔只列前幾筆，其他一律全列
+            if name == "零寬 / 隱形字元" and all(ord(c) in COMMON_ZERO_WIDTH for c in chars):
                 zero_width_lines.append(lineno)
                 if len(zero_width_lines) > MAX_HITS_PER_FILE:
                     continue
@@ -121,7 +124,7 @@ def scan_file(path, char_hits, comment_hits):
             char_hits.append(hit)
     rest = zero_width_lines[MAX_HITS_PER_FILE:]
     if rest:
-        char_hits.append(f"{shown}: [零寬 / 隱形字元] 另有 {len(rest)} 行未列出，行號 {line_list(rest)}，請回原檔逐行確認")
+        char_hits.append(f"{shown}: [零寬 / 隱形字元] 另有 {len(rest)} 筆未列出，行號 {line_list(rest)}，請回原檔逐行確認")
 
     lineno, last = 1, 0
     rest = []
@@ -135,16 +138,21 @@ def scan_file(path, char_hits, comment_hits):
         more = f" …(共 {len(body)} 字，請回原檔看完)" if len(body) > 200 else ""
         comment_hits.append(f"{shown}:{lineno}: [HTML 註解] {safe(body[:200])}{more}")
     if rest:
-        comment_hits.append(f"{shown}: [HTML 註解] 另有 {len(rest)} 個未列出，行號 {line_list(rest)}，請回原檔逐一確認")
+        comment_hits.append(f"{shown}: [HTML 註解] 另有 {len(rest)} 筆未列出，行號 {line_list(rest)}，請回原檔逐一確認")
 
 
 def main(paths):
     # 字元類命中先印、HTML 註解後印，避免大量無害註解把真正的命中擠到後面
-    char_hits, comment_hits = [], []
+    if any(not p.strip() for p in paths):
+        # 空字串經 normpath 會變成 "."，等於改掃目前目錄、目標根本沒掃到
+        sys.exit("路徑是空的：請改用完整路徑 (shell 變數不會留到下一次指令)")
+    headers, char_hits, comment_hits = [], [], []
     for root in paths:
         root = os.path.normpath(root)  # 去掉結尾的 / 與 /.，避免跟進指向外部的符號連結
+        count = 0
         if os.path.islink(root) or not os.path.isdir(root):
             scan_file(root, char_hits, comment_hits)
+            headers.append(f"掃描 {safe(os.path.abspath(root))}：單一檔案")
             continue
         for dirpath, dirnames, filenames in os.walk(root, onerror=lambda e: char_hits.append(error_line(e.filename or root, e))):
             git_dir = os.path.join(dirpath, ".git")
@@ -156,8 +164,10 @@ def main(paths):
             links = [d for d in dirnames if os.path.islink(os.path.join(dirpath, d))]
             for name in sorted(filenames + links):
                 scan_file(os.path.join(dirpath, name), char_hits, comment_hits)
+                count += 1
+        headers.append(f"掃描 {safe(os.path.abspath(root))}：共 {count} 個檔案")
     hits = char_hits + comment_hits
-    print("\n".join(hits) if hits else "未發現隱藏字元、HTML 註解、符號連結、特殊檔案或 NUL 位元組")
+    print("\n".join(headers + (hits or ["未發現隱藏字元、HTML 註解、符號連結、特殊檔案或 NUL 位元組"])))
 
 
 if __name__ == "__main__":
