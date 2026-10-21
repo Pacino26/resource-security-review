@@ -16,6 +16,8 @@ VARIATION_SELECTORS = set(range(0xFE00, 0xFE10)) | set(range(0xE0100, 0xE01F0))
 INVISIBLE_EXTRA = {0x034F, 0x115F, 0x1160, 0x3164, 0xFFA0}  # CGJ、Hangul filler：不是 Cf 但一樣看不到
 HTML_COMMENT = re.compile(r"<!--(.*?)(?:-->|\Z)", re.S)
 COMMON_ZERO_WIDTH = {0x00AD, 0x200C, 0x200D, 0xFEFF}  # 軟連字號、ZWNJ、ZWJ、BOM：常有正常用途
+# 可接 U+FE0E / U+FE0F 但 Unicode 類別不是 So 的 emoji 基底字 (依 emoji-variation-sequences 整理)
+EMOJI_BASES_NOT_SO = {0x203C, 0x2049, 0x2139, 0x2194, 0x25FB, 0x25FC, 0x25FD, 0x25FE, 0x2934, 0x2935, 0x3030, 0x303D}
 MAX_HITS_PER_FILE = 20
 MAX_COMMENTS_PER_FILE = 10
 
@@ -49,11 +51,14 @@ def decode_hidden(name, chars):
     return data.decode("utf-8", errors="replace")
 
 
-def vs_ok(prev, c):
-    """符號、標點 (例如箭頭、雙驚嘆號)、資訊符號 U+2139、keycap 後面單獨一個 U+FE0E / U+FE0F 是正常寫法；其他 variation selector 一律算命中。"""
-    return ord(c) in (0xFE0E, 0xFE0F) and (
-        unicodedata.category(prev)[0] in "SP" or ord(prev) == 0x2139 or prev in "0123456789#*"
-    )
+def vs_ok(prev, c, nxt):
+    """emoji 基底字後面單獨一個 U+FE0E / U+FE0F 是正常寫法；其他 variation selector 一律算命中。
+    不放行一般標點，否則程式碼裡每個標點後面都能藏 1 bit。"""
+    if ord(c) not in (0xFE0E, 0xFE0F):
+        return False
+    if prev in "0123456789#*":
+        return nxt != "" and ord(nxt) == 0x20E3  # keycap，例如數字 1 加上框
+    return unicodedata.category(prev) == "So" or ord(prev) in EMOJI_BASES_NOT_SO
 
 
 def zwj_ok(prev, nxt):
@@ -68,7 +73,7 @@ def line_hits(line):
         prev = line[i - 1] if i else ""
         nxt = line[i + 1] if i + 1 < len(line) else ""
         if ord(c) in VARIATION_SELECTORS:
-            if not (prev and vs_ok(prev, c)):
+            if not (prev and vs_ok(prev, c, nxt)):
                 found.setdefault("variation selector", []).append(c)
             continue
         if ord(c) == 0x200D and prev and nxt and zwj_ok(prev, nxt):
@@ -112,15 +117,17 @@ def scan_file(path, char_hits, comment_hits):
         if line.isascii():
             continue  # 隱形字元都不是 ASCII
         for name, chars in line_hits(line).items():
-            # 只有常見的零寬字元 (BOM、印度文字的 ZWJ 等) 每檔只列前幾筆，其他一律全列
-            if name == "零寬 / 隱形字元" and all(ord(c) in COMMON_ZERO_WIDTH for c in chars):
+            # 只有少量的常見零寬字元 (BOM、印度文字的 ZWJ 等) 每檔只列前幾筆；數量多的可能是二進位隱寫，一律全列
+            if name == "零寬 / 隱形字元" and len(chars) <= 3 and all(ord(c) in COMMON_ZERO_WIDTH for c in chars):
                 zero_width_lines.append(lineno)
                 if len(zero_width_lines) > MAX_HITS_PER_FILE:
                     continue
             codes = sorted({f"U+{ord(c):04X}" for c in chars})
             hit = f"{shown}:{lineno}: [{name}] {' '.join(codes[:10])}{' …' if len(codes) > 10 else ''} (共 {len(chars)} 個)"
             if name in ("Unicode tag 字元", "variation selector"):
-                hit += f"，解碼後：「{safe(decode_hidden(name, chars))}」"
+                decoded = decode_hidden(name, chars)
+                more = f" …(共 {len(decoded)} 字)" if len(decoded) > 100 else ""
+                hit += f"，解碼後：「{safe(decoded[:100])}」{more}"
             char_hits.append(hit)
     rest = zero_width_lines[MAX_HITS_PER_FILE:]
     if rest:
@@ -152,7 +159,7 @@ def main(paths):
         count = 0
         if os.path.islink(root) or not os.path.isdir(root):
             scan_file(root, char_hits, comment_hits)
-            headers.append(f"掃描 {safe(os.path.abspath(root))}：單一檔案")
+            headers.append(f"掃描 {safe(os.path.abspath(root))}：單一路徑")
             continue
         for dirpath, dirnames, filenames in os.walk(root, onerror=lambda e: char_hits.append(error_line(e.filename or root, e))):
             git_dir = os.path.join(dirpath, ".git")
@@ -166,6 +173,8 @@ def main(paths):
                 scan_file(os.path.join(dirpath, name), char_hits, comment_hits)
                 count += 1
         headers.append(f"掃描 {safe(os.path.abspath(root))}：共 {count} 個檔案")
+        if count == 0:
+            char_hits.append(f"{safe(root)}: [沒有檔案] 沒有掃到任何檔案，請確認內容有抓下來")
     hits = char_hits + comment_hits
     print("\n".join(headers + (hits or ["未發現隱藏字元、HTML 註解、符號連結、特殊檔案或 NUL 位元組"])))
 
