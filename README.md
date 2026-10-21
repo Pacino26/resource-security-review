@@ -26,7 +26,7 @@ claude plugin install resource-security-review@resource-security-review
 2. 切到 **Marketplaces** 分頁，選 `resource-security-review`
 3. 選 **Enable auto-update**
 
-開啟後 Claude Code 啟動時會自己檢查新版；更新下載好之後，要重開 Claude Code (或執行 `/reload-plugins`) 才會生效。
+開啟後，每次開 Claude Code 送出第一則訊息後，會在 10 分鐘內自己檢查新版；更新下載好之後，要重開 Claude Code (或執行 `/reload-plugins`) 才會生效。
 
 沒開自動更新時，手動更新到新版：
 

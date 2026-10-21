@@ -22,7 +22,8 @@
   跳脫規則 (必做)：所有來自目標的文字 (名稱、網址、引用原文，包括 INFO_ROWS / CHECK_ROWS 裡的文字)
     填進去之前，先把 & < > " ' 換成 &amp; &lt; &gt; &quot; &#39; (& 要最先換)，隱形字元改寫成 [U+200B] 這種寫法。
     不跳脫的話，目標裡的 <script> 會在打開報告時執行，HTML 註解的開頭符號會把後面的證據整段藏起來。
-    CSP 已禁止執行 script，但那只是保險，跳脫一定要做。
+    CSP 已禁止執行 script，但那只是保險，跳脫一定要做：CSP 擋不住 <meta http-equiv="refresh"> 把頁面導走，
+    也擋不住 <style> 改版面、把證據藏起來。
 -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{TARGET_NAME}} — 資安評估</title>
