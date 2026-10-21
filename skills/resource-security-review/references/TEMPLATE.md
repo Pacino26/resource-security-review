@@ -39,7 +39,7 @@
 > 這節是安全評估最關鍵的一塊，務必具體到「它會碰到什麼資料」「傳到哪裡」。
 
 - **宣告權限**：(Chrome 的 `permissions` / MCP 的 scope / Skill 會呼叫的工具)
-- **外部連線**：會打哪些 domain、有沒有 hard-coded endpoint；留意 telemetry / analytics / improvement 開頭的非宣稱網址；外送的即使不是檔案內容，也要看是不是檔案路徑 / branch 名 / error message 這類中繼資料；logging 的關閉開關是不是真的有效 (關掉之後是否真的停止記錄與外送)
+- **外部連線**：會打哪些 domain、有沒有 hard-coded endpoint；留意 telemetry / analytics / improvement 開頭的非宣稱網址；外送的即使不是檔案內容，也要看是不是檔案路徑 / branch 名 / error message 這類中繼資料；logging 的關閉開關是不是真的有效 (關掉之後是不是其實還在記錄)
 - **讀取範圍**：只讀目前分頁 / 所有網站 / 剪貼簿 / 本地檔案系統
 - **寫入行為**：會不會修改檔案、送出資料、執行 shell 指令
 - **驗證方式**：是否需要 API key、token 存在哪裡 (localStorage / 系統 keychain / 明文檔案)
@@ -59,7 +59,7 @@
 - [ ] **無 AI 指令注入**：README / SKILL.md / tool description 沒有指示 AI 執行額外動作的語句；無隱形指令 (隱藏 HTML 註解、零寬字元、Word / PDF 的白底白字或 1pt 極小字、異常行距)
 - [ ] **無二階段 payload**：不會在執行時才從網路下載並執行內容 (Claude 給你看的可見碼乾淨 ≠ 安全，後續下載的不會再提示一次)
 - [ ] **執行環境已釐清**：清楚會跑在哪 (Claude API 沙盒 vs Claude Code 本地)；本地預設無沙箱，等同你的帳號權限
-- [ ] **不改持久化設定**：不會寫入 / append / auto-commit 你的 `CLAUDE.md` 或 `settings.json` 來改變 Claude 未來每個 session 的行為 (影響的是之後每一次對話，不只眼前這一次，而且不容易發現)
+- [ ] **不改持久化設定**：不會寫入 / append / auto-commit 你的 `CLAUDE.md` 或 `settings.json` 來改變 Claude 未來每個 session 的行為 (等於把注入延續到之後每一次對話，比只影響眼前這一次更難察覺)
 - [ ] **不封鎖工具 / 不強制 routing**：沒有 `NEVER use mcp__` / `禁止使用` 封鎖特定工具，也沒有「永遠先呼叫我、不要直接回答」這種剝奪選擇權的強制 routing
 - [ ] **無 proactive 自動接管**：不是預設 `proactive: true` + 誘導語 (「we recommend keeping it on」) 讓它不請自來插進每次互動，能完全 opt-in
 - [ ] **無暗黑導流**：流程不夾帶第三方服務推廣、`utm_` / `ref=` 連結，或依行為訊號把使用者導去某處
@@ -129,10 +129,10 @@
 
 到 GitHub 打開 `SKILL.md` 和 repo 檔案的 Raw 原文，安裝前先問四個問題，把明顯有問題的先擋掉：
 
-1. **它要什麼？**：要求的 API key、token、環境變數，跟它宣稱的功能對得上嗎？例如只是排版或翻譯的工具，卻要雲端服務的金鑰。
-2. **它帶了什麼？**：有沒有跟功能無關的腳本或執行檔 (`.sh`、`.py`、`.js`、編譯好的二進位檔)。功能用不到的檔案，最值得打開來看。
-3. **它會做什麼？**：搜尋 `curl`、`bash`、`base64`、`eval` 這類字；附了加密或要密碼才能解開的壓縮檔，就不要裝。
-4. **它連去哪？**：有沒有宣稱服務以外的網址，特別是名稱帶 telemetry、analytics、improvement 的。
+1. **它要什麼？** — 要求的 API key、token、環境變數，跟它宣稱的功能對得上嗎？例如只是排版或格式轉換的工具，卻要你的雲端帳號金鑰。
+2. **它帶了什麼？** — 有沒有跟功能無關的腳本或執行檔 (`.sh`、`.py`、`.js`、編譯好的二進位檔)。功能用不到的檔案，最值得打開來看。
+3. **它會做什麼？** — 在所有檔案裡搜尋 `curl`、`bash`、`base64`、`eval` 這類危險關鍵字，搜到就看它拿來做什麼；附了加密或要密碼才能解開的壓縮檔，就不要裝。
+4. **它連去哪？** — 有沒有宣稱服務以外的網址，特別是 telemetry、analytics、improvement 開頭的網址。
 
 > 注意：這種自查只看得到明文。零寬字元、白底白字、極小字型這類藏法，人在畫面上看不出來，模型讀檔時卻會照樣讀進去，所以權限大的工具還是要在隔離環境實際試過。
 
@@ -147,10 +147,10 @@
 
 報告需要佐證「這類手法真的有人在用」時可引用：
 
-- **Snyk ToxicSkills (2026-02-05)**：大規模掃描 ClawHub 上的 agent skills，發現不少有嚴重安全問題或含 prompt injection (數字見原文)。https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/
+- **Snyk ToxicSkills (2026-02-05)**：大規模掃描公開的 agent skills，分析其中的安全缺陷、prompt injection 與惡意 skill (細節見原文)。https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/
 - **Datadog Security Labs (2026-05-11)**：SKILL.md 動態 context `` !`command` `` 在載入時先執行 shell，跑在模型層防護之前。https://securitylabs.datadoghq.com/articles/malicious-skills-supply-chain-risks-in-coding-agents-with-dynamic-context/
 - **Reversec Skill Issues (2026-05)**：惡意 skills / agents 入侵 Claude Code 的手法系列。https://labs.reversec.com/posts/2026/05/skill-issues-compromising-claude-code-with-malicious-skills-agents-part-1
 - **Pluto Security**：同一份 SKILL.md 在 Claude API 是沙盒、在 Claude Code 本地繼承完整主機權限。https://pluto.security/blog/claude-extension-ecosystem-security-practitioner-guide/
 - **MCP 攻擊模式**：rug pull / typosquatting / tool poisoning (arXiv 2604.01905)；實際案例 postmark-mcp 在 npm 偷收 email (Snyk 2025-09)
-- **Koi Security ClawHavoc**：在 ClawHub 上找出大量惡意 skills，且後續追蹤數量持續增加
+- **Koi Security ClawHavoc (2026-02)**：稽核 ClawHub 時找出數百個惡意 skills，多數用假的「安裝前置步驟」誘導使用者下載要密碼的壓縮檔或執行混淆過的腳本。報導：https://thehackernews.com/2026/02/researchers-find-341-malicious-clawhub.html
 - **PromptArmor (2026-01)**：Word 白底白字 1pt 隱形指令，誘導 Claude Cowork 外傳房貸文件與 SSN
