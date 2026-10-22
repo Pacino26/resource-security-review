@@ -151,6 +151,4 @@
 - **Datadog Security Labs (2026-05-11)**：SKILL.md 動態 context `` !`command` `` 在載入時先執行 shell，跑在模型層防護之前。https://securitylabs.datadoghq.com/articles/malicious-skills-supply-chain-risks-in-coding-agents-with-dynamic-context/
 - **Reversec Skill Issues (2026-05)**：惡意 skills / agents 入侵 Claude Code 的手法系列。https://labs.reversec.com/posts/2026/05/skill-issues-compromising-claude-code-with-malicious-skills-agents-part-1
 - **Pluto Security**：同一份 SKILL.md 在 Claude API 是沙盒、在 Claude Code 本地繼承完整主機權限。https://pluto.security/blog/claude-extension-ecosystem-security-practitioner-guide/
-- **MCP 攻擊模式**：rug pull / typosquatting / tool poisoning (arXiv 2604.01905)；實際案例 postmark-mcp 在 npm 偷收 email (Snyk 2025-09)
-- **Koi Security ClawHavoc (2026-02)**：稽核 ClawHub 時找出數百個惡意 skills，多數用假的「安裝前置步驟」誘導使用者下載要密碼的壓縮檔或執行混淆過的腳本。報導：https://thehackernews.com/2026/02/researchers-find-341-malicious-clawhub.html
-- **PromptArmor (2026-01)**：Word 白底白字 1pt 隱形指令，誘導 Claude Cowork 外傳房貸文件與 SSN
+- **MCP 攻擊模式**：rug pull / typosquatting / tool poisoning (arXiv 2604.01905)
