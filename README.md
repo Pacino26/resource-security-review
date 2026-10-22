@@ -2,23 +2,39 @@
 
 Claude Code plugin：第三方資源 (Chrome 外掛、GitHub repo、Claude Skill / Plugin、MCP Server、npm / pip 套件) 安裝前的資安評估，產出 🟢🟡🔴 風險報告。
 
-## 安裝
+> **只能在 Claude Code 使用**：終端機、Claude 桌面 App 的 Code 分頁、VS Code / JetBrains 擴充都可以。claude.ai 的聊天模式 (網頁、桌面 App 的 Chat 分頁、手機 App) 用不到。
 
-在 Claude Code 對話中：
+## 最快的安裝方式
+
+把下面這段貼給你的 Claude Code，它會依照本頁的「安裝步驟」幫你裝：
 
 ```
-/plugin marketplace add Pacino26/resource-security-review
-/plugin install resource-security-review@resource-security-review
+請幫我安裝 resource-security-review 這個 Claude Code plugin，裝好後教我怎麼用。
+來源：https://github.com/Pacino26/resource-security-review
 ```
 
-或在終端機：
+## 安裝步驟
 
-```bash
-claude plugin marketplace add Pacino26/resource-security-review
-claude plugin install resource-security-review@resource-security-review
-```
+1. **事前準備**：需要 `gh` (並且已經 `gh auth login`)、`python3`、`curl`、`unzip`。評估時會用 `gh api` 抓原始檔、查 repo 的 stars 和更新時間；掃描隱藏字元會用到 `python3`。Mac 裝了 git 就會有 `python3`，`curl` 和 `unzip` 是內建的。
+2. **先看過再裝 (建議)**：這是資安工具，自己也該被檢查。裝之前可以先讀 `skills/resource-security-review/SKILL.md` 和 `skills/resource-security-review/scripts/scan_hidden.py`，確認它只讀檔、不執行被評估的程式。
+3. **安裝**：在終端機執行
 
-### 開啟自動更新 (建議)
+   ```bash
+   claude plugin marketplace add Pacino26/resource-security-review
+   claude plugin install resource-security-review@resource-security-review
+   ```
+
+   找不到 `claude` 指令時 (例如只用桌面 App)，改在 Claude Code 對話框輸入
+
+   ```
+   /plugin marketplace add Pacino26/resource-security-review
+   /plugin install resource-security-review@resource-security-review
+   ```
+
+4. **載入**：輸入 `/reload-plugins` 或重開 Claude Code，新功能才會出現。
+5. **開啟自動更新 (建議)**：見下一節。
+
+### 開啟自動更新
 
 這是第三方 marketplace，Claude Code 預設**不會**自動更新它，不開的話之後出新版你不會收到。開一次就好：
 
@@ -35,16 +51,16 @@ claude plugin install resource-security-review@resource-security-review
 /plugin update resource-security-review@resource-security-review
 ```
 
-建議先裝好 `gh` CLI 並 `gh auth login`，評估時會用 `gh api` 抓原始檔、查 repo 的 stars、更新時間等資訊。掃描隱藏字元會用到 `python3` (Mac 裝了 git 就會有)。
+## 怎麼用
+
+- **直接貼連結問**：「<網址> 這個安全嗎？」或「幫我評估 <網址>」，就會自動啟動審查
+- **手動啟動**：輸入 `/resource-security-review:resource-security-review`，後面接網址
+- **支援**：Chrome 外掛、GitHub repo / CLI 工具、Claude Skill、Claude Code Plugin、MCP Server、npm / pip 套件
+- **第一次試用**：可以先評估它自己，「幫我評估 https://github.com/Pacino26/resource-security-review」
 
 ## 功能說明
 
 **一句話**：要裝外掛、skill、MCP 或套件之前，先讓 Claude 做一次「資安健檢」，看這個東西能不能放心用。
-
-**怎麼用**
-- 直接貼連結問，例如「這個 skill 安全嗎？https://github.com/xxx/yyy」，skill 會自動觸發
-- 也可以手動打 `/resource-security-review:resource-security-review`
-- 支援：Chrome 外掛、GitHub repo / CLI 工具、Claude Skill、Claude Code Plugin、MCP Server、npm / pip 套件
 
 **它會做的事**
 1. 抓目標的實際內容 (manifest、package.json、SKILL.md、原始碼)，**只讀，不安裝、不執行任何程式**
