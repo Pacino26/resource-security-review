@@ -21,7 +21,7 @@ Claude Code plugin：第三方資源 (Chrome 外掛、GitHub repo、Claude Skill
    - `curl`、`unzip`：下載與解開 Chrome 外掛、套件。Mac 內建
    - `npm`：評估 npm 套件時才需要
 2. **先看過再裝 (建議)**：這是資安工具，自己也該被檢查。裝之前可以先讀 [SKILL.md](skills/resource-security-review/SKILL.md)、[references/TEMPLATE.md](skills/resource-security-review/references/TEMPLATE.md) 和 [scripts/scan_hidden.py](skills/resource-security-review/scripts/scan_hidden.py)，確認它只讀檔、不執行被評估的程式。
-3. **安裝**：依你用的環境擇一。終端機、桌面 App 的本機 session、VS Code 擴充共用同一份設定，用哪一種裝，其他兩個都能用。
+3. **安裝**：依你用的環境擇一，先試 `claude` 指令；沒有的話，VS Code 用 Manage plugins，其他情況改設定檔。終端機、桌面 App 的本機 session、VS Code 擴充共用同一份設定，用哪一種裝，其他兩個都能用。
    - **有 `claude` 指令 (終端機)**：
 
      ```bash
@@ -30,7 +30,7 @@ Claude Code plugin：第三方資源 (Chrome 外掛、GitHub repo、Claude Skill
      ```
 
    - **VS Code 擴充**：在對話框輸入 `/plugins` 打開 Manage plugins → **Marketplaces** 分頁輸入 `Pacino26/resource-security-review` 新增 → **Plugins** 分頁找到 resource-security-review，按 **Install** 並選 Install for you。
-   - **桌面 App，或找不到 `claude` 指令**：把下面這段合併進 `~/.claude/settings.json` (原本就有內容的話合併進去，不要整份覆蓋)。這跟終端機指令寫進設定檔的內容相同，另外多了自動更新。這一步會改到你的 Claude Code 設定檔，請先看過內容再同意。
+   - **桌面 App，或找不到 `claude` 指令**：把下面這段合併進 `~/.claude/settings.json` (原本就有內容的話合併進去，不要整份覆蓋)。這跟終端機指令寫進設定檔的內容相同，另外多了自動更新。這一步會改到你的 Claude Code 設定檔，請先看過內容再同意：它只登記 marketplace、啟用 plugin、開自動更新，不碰 CLAUDE.md、hooks、權限設定。Claude 沒辦法改這個檔案時，你也可以自己用文字編輯器加進去。
 
      ```json
      {
@@ -46,7 +46,7 @@ Claude Code plugin：第三方資源 (Chrome 外掛、GitHub repo、Claude Skill
      }
      ```
 
-4. **載入**：重開 Claude Code (桌面 App 開一個新的 session)，或在對話框輸入 `/reload-plugins`。用改設定檔的方式裝時，第一次啟動會在背景下載，還沒出現就再重開一次。
+4. **載入**：用指令或 Manage plugins 裝的，重開 Claude Code 或在對話框輸入 `/reload-plugins`。用改設定檔裝的，要開一個新的 session 才會開始下載 (在背景進行)，還沒出現就再開一次新 session。
 5. **開啟自動更新 (建議)**：見下一節。改設定檔安裝的已經開好了。
 
 ### 開啟自動更新
