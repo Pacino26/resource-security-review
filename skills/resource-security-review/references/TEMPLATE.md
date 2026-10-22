@@ -138,7 +138,7 @@
 
 ### npm / pip 套件
 - 下載量與版本歷史 (有無近期突然竄起)
-- 名稱是否為 typosquatting (例：`reakt` 假裝 `react`)
+- 名稱是否為 typosquatting：跟熱門套件只差一兩個字母、多一個連字號或換了字母順序，想讓人打錯字時裝到它
 - 看 `postinstall` script
 
 ---
