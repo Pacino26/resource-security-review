@@ -113,7 +113,7 @@
 
 ### Claude Skill / Plugin / MCP Server
 - Skill 的 `SKILL.md` 描述的行為是否與實際執行一致
-- frontmatter 有無動態 context (`` !`command` ``)：skill 載入時直接執行 shell，跑在任何模型層防護之前 (2026-02 ToxicSkills 攻擊的主要載體)
+- frontmatter 有無動態 context (`` !`command` ``)：skill 載入時直接執行 shell，跑在任何模型層防護之前
 - `allowed-tools` 宣告了哪些 tool (Bash / Write / WebFetch)、skill 附帶的 scripts 實際做什麼
 - Plugin 的 hooks (PreToolUse / SessionStart 等) 會自動執行什麼、marketplace 來源是否可信
 - MCP Server 的通訊方式 (stdio / SSE / HTTP) 與目的地
